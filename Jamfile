@@ -1,0 +1,21 @@
+# Copyright 2022 Rishabh Rawat
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
+
+path-constant ROOT : ../.. ;
+path-constant HERE : . ;
+
+make venv : $(HERE)/requirements.txt : @setup_env ;
+actions setup_env {
+    python3 -m venv $(<)
+    $(<)/bin/python -m pip install -r $(>)
+}
+
+make report.yaml : venv : @build_report ;
+actions build_report {
+    PYTHONPATH=src $(>)/bin/python -m boost_status $(ROOT) > $(<)
+}
+
+install dist : report.yaml : <location>. ;
+
