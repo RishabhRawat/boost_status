@@ -1,0 +1,47 @@
+name: Report
+
+on: [push]
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install packages
+        if: matrix.install
+        run: sudo apt install ${{matrix.install}}
+
+      - name: Setup Boost
+        run: |
+          echo GITHUB_REPOSITORY: $GITHUB_REPOSITORY
+          echo GITHUB_BASE_REF: $GITHUB_BASE_REF
+          echo GITHUB_REF: $GITHUB_REF
+          REF=${GITHUB_BASE_REF:-$GITHUB_REF}
+          REF=${REF#refs/heads/}
+          echo REF: $REF
+          BOOST_BRANCH=develop && [ "$REF" == "master" ] && BOOST_BRANCH=master || true
+          echo BOOST_BRANCH: $BOOST_BRANCH
+          cd ..
+          git clone -b $BOOST_BRANCH --depth 1 --recursive -j 12 https://github.com/boostorg/boost.git boost-root
+          cd boost-root
+          mkdir -p tools/boost_status
+          cp -r $GITHUB_WORKSPACE/* tools/boost_status
+          ./bootstrap.sh
+          cd tools/boost_status
+          echo "Building report"
+          curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/rate_limit
+          ../../b2 || (curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/rate_limit && false)
+          echo "Done generating report"
+          cat report.yaml
+          cp report.yaml ${GITHUB_WORKSPACE}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Upload Artifact"
+        uses: actions/upload-artifact@v3
+        with:
+          name: report.yaml
+          path: report.yaml
+          retention-days: 7
+
