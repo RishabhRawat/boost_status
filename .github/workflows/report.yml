@@ -1,6 +1,9 @@
 name: Report
 
-on: [push]
+on:
+  push:
+  schedule:
+    - cron: "* 0 * * *"
 
 jobs:
   report:
@@ -31,7 +34,8 @@ jobs:
           cd tools/boost_status
           echo "Building report"
           curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/rate_limit
-          ../../b2 || (curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/rate_limit && false)
+          # We retry twice because github is funky with its apis
+          ../../b2 || ../../b2 || (curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/rate_limit && false)
           echo "Done generating report"
           cat report.yaml
           cp report.yaml ${GITHUB_WORKSPACE}
@@ -44,4 +48,3 @@ jobs:
           name: report.yaml
           path: report.yaml
           retention-days: 7
-

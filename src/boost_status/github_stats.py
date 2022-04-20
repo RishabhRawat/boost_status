@@ -121,8 +121,12 @@ class GithubMetaData:
                 },
             )
             if response.status_code > 400:
-                print(response.text)
-            response.raise_for_status()
+                print(response.text, flush=True)
+            try:
+                response.raise_for_status()
+            except:
+                print("ERROR: ", response.status_code, response.content, response.text, flush=True)
+                raise
             response = response.json()["data"]["repository"][issue_type]
             cursor = response["pageInfo"]["endCursor"]
             issue_list.extend(response["nodes"])
