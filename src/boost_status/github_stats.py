@@ -58,7 +58,9 @@ class GithubStats:
 class GithubMetaData:
     def __init__(self, remote_url) -> None:
         self._requests = requests.Session()
-        self._requests.headers.update({"Accept": "application/vnd.github.v3+json"})
+        self._requests.headers.update(
+            {"Accept": "application/vnd.github.v3+json", "User-Agent": "requests"}
+        )
         if os.getenv("GITHUB_TOKEN"):
             self._requests.headers.update(
                 {"Authorization": f'token {os.getenv("GITHUB_TOKEN")}'}
@@ -77,14 +79,6 @@ class GithubMetaData:
         )
         response.raise_for_status()
         return [user["login"] for user in response.json()]
-
-    def get_issue_comment(self, issue_id, comment_number):
-        response = self._requests.get(
-            f"{self._base_url}/issues/{issue_id}/comments",
-            json={"per_page": 1, "page": comment_number},
-        )
-        response.raise_for_status()
-        return response.json()[0]
 
     def get_issue_summary(self, issue_type="issue"):
         page_size = 100
@@ -126,6 +120,8 @@ class GithubMetaData:
                     )
                 },
             )
+            if response.status_code > 400:
+                print(response.text)
             response.raise_for_status()
             response = response.json()["data"]["repository"][issue_type]
             cursor = response["pageInfo"]["endCursor"]
@@ -149,8 +145,12 @@ class GithubMetaData:
             )
             if issue["comments"]["totalCount"] > 0:
                 last_comment_author = issue["comments"]["nodes"][0]["author"]
-                last_comment_author = last_comment_author['login'] if last_comment_author else "ghost"
-                issue_info.pending_response = 1 if last_comment_author in self._contributors else 0
+                last_comment_author = (
+                    last_comment_author["login"] if last_comment_author else "ghost"
+                )
+                issue_info.pending_response = (
+                    1 if last_comment_author in self._contributors else 0
+                )
             issue_summary += issue_info
 
         return asdict(issue_summary)

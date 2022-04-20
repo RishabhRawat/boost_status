@@ -54,8 +54,9 @@ def main(argv=None):
     parser.add_argument("path", help="path to boost super project git directory")
     parsed_args = parser.parse_args(argv)
     boost_repos = list_boost_repos(Path(parsed_args.path))
+    boost_repos = {k:boost_repos[k] for k in list(boost_repos.keys())[:5]}
 
-    with Pool() as p:
+    with Pool(2) as p:
         boost_repos = dict(p.map(get_repo_status, boost_repos.items()))
 
     overall_stats = {

@@ -31,7 +31,17 @@ jobs:
           cd tools/boost_status
           echo "Building report"
           curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/rate_limit
-          ../../b2 || curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/rate_limit && false
+          ../../b2 || (curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/rate_limit && false)
+          echo "Done generating report"
           cat report.yaml
+          cp report.yaml ${GITHUB_WORKSPACE}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Upload Artifact"
+        uses: actions/upload-artifact@v3
+        with:
+          name: report.yaml
+          path: report.yaml
+          retention-days: 7
+
