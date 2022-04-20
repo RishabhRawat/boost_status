@@ -30,7 +30,8 @@ jobs:
           ./bootstrap.sh
           cd tools/boost_status
           echo "Building report"
-          ../../b2
+          curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/rate_limit
+          ../../b2 || curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/rate_limit && false
           cat report.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

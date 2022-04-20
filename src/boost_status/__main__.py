@@ -33,10 +33,10 @@ def get_repo_status(repo: Tuple[str, Dict[str, Any]]) -> Dict[str, Any]:
     repo_info.update(get_git_metadata(repo_info["path"]))
     del repo_info["path"]
     github_metadata = GithubMetaData(repo_info["url"])
-    (
-        repo_info["issues"],
-        repo_info["pull_requests"],
-    ) = github_metadata.get_issue_summary()
+    repo_info["issues"] = github_metadata.get_issue_summary(issue_type="issues")
+    repo_info["pull_requests"] = github_metadata.get_issue_summary(
+        issue_type="pullRequests"
+    )
     return repo_name, repo_info
 
 
